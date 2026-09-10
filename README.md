@@ -1,4 +1,4 @@
-# Trabajo-Pr-ctico---Esc-ner-de-Red
+# Trabajo practico escáner de red
 Trabajo practico sobre un escáner de red realizado por Miguel Gonzalez Lipak
 
 10/9 - Se incializo el repositorio de Github
