@@ -1,4 +1,4 @@
-# Trabajo-Pr-ctico---Esc-ner-de-Red
+# Trabajo practico escáner de red
 Trabajo practico sobre un escáner de red realizado por Miguel Gonzalez Lipak
 
 10/9 - Se incializo el repositorio de Github
@@ -19,5 +19,3 @@ Trabajo practico sobre un escáner de red realizado por Miguel Gonzalez Lipak
        del rango especificado por el usuario utilizando un buce for
      - Se creo un archivo VentanaPrincipal.java donde ira el codigo de
        la interfaz grafica
-
-14/9 - Se empezo a programar la parte grafica
