@@ -1,7 +1,7 @@
 package controlador;
 
-//import modelo.Equipo;
-//import java.net.InetAddress;
+import modelo.Equipo;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class EscanerRed {
 
     private long ipANumero(String ip) {
         String[] partes = ip.split("\\.");
-    
+        
         long n1 = Integer.parseInt(partes[0]);
         long n2 = Integer.parseInt(partes[1]);
         long n3 = Integer.parseInt(partes[2]);
@@ -44,7 +44,7 @@ public class EscanerRed {
         long parte3 = (numero / 256) % 256;
         long parte4 = numero % 256;
         return parte1 + "." + parte2 + "." + parte3 + "." + parte4;
-}
+    }
 
     public List<String> generarRangoIps(String ipInicio, String ipFin) {
         List<String> listaIps = new ArrayList<>();
@@ -57,7 +57,26 @@ public class EscanerRed {
         }
         return listaIps;
     }
-    
 
-    
+    public Equipo escanearIp(String ip, int timeout) {
+        String nombre = "Desconocido";
+        boolean respondio = false;
+        long tiempo = 0;
+
+        try {
+            InetAddress address = InetAddress.getByName(ip);
+            respondio = address.isReachable(timeout);
+
+            if (respondio) {
+                nombre = address.getHostName();
+                tiempo = timeout; 
+            }
+        } catch (Exception e) {
+            respondio = false;
+            nombre = "Desconocido";
+            tiempo = 0;
+        }
+
+        return new Equipo(ip, nombre, respondio, tiempo);
+    }
 }
