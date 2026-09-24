@@ -21,3 +21,9 @@ Trabajo practico sobre un escáner de red realizado por Miguel Gonzalez Lipak
 - Se agrego un metodo mas a la clase de "EscanerRed" para escanear las IPs
 - Se creo un archivo Main
 - Se agrego codigo a la clase Main para ejecutar la ventana
+
+24/9
+- Se creo la documentacion de desarrollo en donde se explica como funciona el codigo y otra informacion relacionada al programa
+- Se compilaron las clases para poder crear el ejectuable .jar
+- Se creo el archivo "EscanerRed.jar" para poder ejectuar el codigo desde un ejecutable y no el editor de codigo
+- Se creo el manual de usuario en donde se explica como descargar y ejectuar el programa
