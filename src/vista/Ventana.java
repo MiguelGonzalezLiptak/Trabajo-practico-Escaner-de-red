@@ -5,6 +5,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import controlador.EscanerRed;
 import modelo.Equipo;
@@ -25,11 +26,16 @@ public class Ventana extends JFrame implements ActionListener {
     private JButton btnGuardar;
     private JButton btnMostrarActivos;
     private EscanerRed escanerControlador;
+    private volatile boolean cancelado = false;
+    private Thread hiloEscaneo;
+    private List<Equipo> ultimosResultados;
+    private boolean mostrandoSoloActivos = false;
 
     public Ventana() {
         escanerControlador = new EscanerRed();
         setTitle("Escaner red");
         setSize(750, 550);
+        setLocationRelativeTo(null); 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -76,6 +82,8 @@ public class Ventana extends JFrame implements ActionListener {
         panelInferior.setLayout(new BoxLayout(panelInferior, BoxLayout.Y_AXIS));
 
         estado = new JLabel("Listo para escanear", SwingConstants.CENTER);
+        estado.setAlignmentX(Component.CENTER_ALIGNMENT);
+        estado.setHorizontalAlignment(SwingConstants.CENTER);
         estado.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
 
         JPanel panelContador = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -93,6 +101,8 @@ public class Ventana extends JFrame implements ActionListener {
 
         btnIniciar.addActionListener(this);
         btnLimpiar.addActionListener(this);
+        btnMostrarActivos.addActionListener(this);
+        btnDetener.addActionListener(this);
 
         panelBotones.add(btnIniciar);
         panelBotones.add(btnDetener);
@@ -113,8 +123,48 @@ public class Ventana extends JFrame implements ActionListener {
             ejecutarEscaneo();
         } else if (e.getSource() == btnLimpiar) {
             modeloTabla.setRowCount(0); 
+            if (ultimosResultados != null) ultimosResultados.clear();
+            mostrandoSoloActivos = false;
+            btnMostrarActivos.setText("Mostrar solo activos");
             EquiposActivos.setText("Equipos activos: 0");
             estado.setText("Listo para escanear");
+        } else if (e.getSource() == btnMostrarActivos) {
+            if (ultimosResultados == null || ultimosResultados.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Realiza un escaneo primero.", "Aviso", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            mostrandoSoloActivos = !mostrandoSoloActivos;
+
+            if (mostrandoSoloActivos) {
+                actualizarTabla(true);
+                btnMostrarActivos.setText("Mostrar todos");
+                estado.setText("Filtro aplicado: Solo equipos activos");
+            } else {
+                actualizarTabla(false);
+                btnMostrarActivos.setText("Mostrar solo activos");
+                estado.setText("Mostrando todos los equipos");
+            }
+        } else if (e.getSource() == btnDetener) {
+            cancelado = true;
+            estado.setText("Deteniendo escaneo...");
+        }
+    }
+
+    private void actualizarTabla(boolean soloActivos) {
+        if (ultimosResultados == null) return;
+
+        modeloTabla.setRowCount(0);
+
+        for (Equipo equipo : ultimosResultados) {
+            if (!soloActivos || equipo.isActivo()) {
+                modeloTabla.addRow(new Object[]{
+                    equipo.getIp(),
+                    equipo.getNombre(),
+                    equipo.isActivo(),
+                    equipo.getTiempoRespuesta()
+                });
+            }
         }
     }
 
@@ -129,33 +179,60 @@ public class Ventana extends JFrame implements ActionListener {
 
         modeloTabla.setRowCount(0);
         estado.setText("Escaneando...");
+        cancelado = false;
+        btnIniciar.setEnabled(false);
+        mostrandoSoloActivos = false;
+        btnMostrarActivos.setText("Mostrar solo activos");
 
-        int timeout = 1000;
+        int timeoutTemp = 1000;
         try {
-            timeout = Integer.parseInt(txtTiempoEspera.getText().trim());
+            timeoutTemp = Integer.parseInt(txtTiempoEspera.getText().trim());
         } catch (NumberFormatException ex) {
-            timeout = 1000;
+            timeoutTemp = 1000;
         }
+        final int timeout = timeoutTemp;
 
-        List<String> listaIps = escanerControlador.generarRangoIps(ipInicio, ipFin);
-        int activosCount = 0;
+        hiloEscaneo = new Thread(() -> {
+            List<String> listaIps = escanerControlador.generarRangoIps(ipInicio, ipFin);
+            ultimosResultados = new ArrayList<>();
+            int activosCount = 0;
 
-        for (String ip : listaIps) {
-            Equipo equipo = escanerControlador.escanearIp(ip, timeout);
+            for (String ip : listaIps) {
+                if (cancelado) {
+                    break;
+                }
 
-            if (equipo.isActivo()) {
-                activosCount++;
+                Equipo equipo = escanerControlador.escanearIp(ip, timeout);
+                ultimosResultados.add(equipo);
+
+                if (equipo.isActivo()) {
+                    activosCount++;
+                }
+
+                final int activosActuales = activosCount;
+
+                SwingUtilities.invokeLater(() -> {
+                    modeloTabla.addRow(new Object[]{
+                        equipo.getIp(),
+                        equipo.getNombre(),
+                        equipo.isActivo(),
+                        equipo.getTiempoRespuesta()
+                    });
+                    EquiposActivos.setText("Equipos activos: " + activosActuales);
+                });
             }
 
-            modeloTabla.addRow(new Object[]{
-                equipo.getIp(),
-                equipo.getNombre(),
-                equipo.isActivo(),
-                equipo.getTiempoRespuesta()
+            final boolean seCancelo = cancelado;
+            SwingUtilities.invokeLater(() -> {
+                if (seCancelo) {
+                    estado.setText("Escaneo detenido por el usuario");
+                } else {
+                    estado.setText("Escaneo finalizado");
+                }
+                btnIniciar.setEnabled(true);
             });
-        }
+        });
 
-        EquiposActivos.setText("Equipos activos: " + activosCount);
-        estado.setText("Escaneo finalizado");
+        hiloEscaneo.start();
     }
 }
