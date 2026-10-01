@@ -27,3 +27,9 @@ Trabajo practico sobre un escáner de red realizado por Miguel Gonzalez Lipak
 - Se compilaron las clases para poder crear el ejectuable .jar
 - Se creo el archivo "EscanerRed.jar" para poder ejectuar el codigo desde un ejecutable y no el editor de codigo
 - Se creo el manual de usuario en donde se explica como descargar y ejectuar el programa
+1/10
+- Se modifico la vista para que aparezca en el centro de la pantalla
+- Se modifico la vista para muestre solo los usuarios activos si el usuario presiona un boton
+- Se modifico la vista para que los escaneos salgan uno a uno mientras se realizan
+- Se modifico la vista para poder detener el escaneo a medida que se realiza
+- Se modifico la vista para centrar texto
